@@ -1,0 +1,17 @@
+FastAPI[standard]
+pydantic
+typing
+python-dotenv
+SQLModel
+uvicorn[standard]
+
+langchain-community
+langchain-core
+langchain-groq
+langgraph
+
+serpapi
+jinja2
+trafilatura
+googlesearch-python
+google-search-results
