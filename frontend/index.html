@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Search Agent Reports</title>
+    <link rel="stylesheet" href="static/css/styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Search Agent Reports</h1>
+            <div class="search-container">
+                <input type="text" id="searchInput" placeholder="Enter your search query">
+                <button onclick="performSearch()">Search</button>
+            </div>
+        </header>
+
+        <!-- Loading Spinner -->
+        <div id="loadingSpinner" class="loading-spinner hidden"></div>
+
+        <!-- Error Message -->
+        <div id="errorMessage" class="error-message hidden"></div>
+
+        <!-- Search Results -->
+        <div id="searchResults" class="results-container hidden">
+            <h2>Current Search Results</h2>
+            <div id="currentResults"></div>
+        </div>
+
+        <!-- History Section -->
+        <div id="historySection" class="history-container">
+            <h2>Search History</h2>
+            <div id="historyList"></div>
+        </div>
+    </div>
+
+    <script src="static/js/main.js"></script>
+</body>
+</html>
