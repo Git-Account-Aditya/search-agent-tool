@@ -3,72 +3,113 @@ from typing import List, Optional, Dict
 import trafilatura
 import httpx
 from pypdf import PdfReader
+import asyncio
+from urllib.parse import urlparse
 
 
 class ContentExtractedTool(BaseModel):
-    '''
-    '''
+    """A tool for extracting content from URLs, handling both HTML and PDF formats."""
 
     name: str = 'content_extractor'
     description: str = '''
-        A tool for performing content extraction from a url.
-
-        Attributes:
-
+        A tool for performing content extraction from URLs with robust error handling.
+        Supports both HTML websites and PDF documents.
     '''
 
-    async def _fetch_url_html(self, url: str, timeout: float = 15) -> Optional[str]:
-        """Fetch the HTML content of a URL asynchronously."""
+    async def _fetch_url_html(self, url: str, timeout: float = 15) -> Dict[str, str]:
+        """Fetch the HTML content of a URL asynchronously with comprehensive error handling."""
+        
+        # Validate URL format
+        try:
+            parsed_url = urlparse(url)
+            if not all([parsed_url.scheme, parsed_url.netloc]):
+                return {'error': 'Invalid URL format'}
+        except Exception:
+            return {'error': 'Invalid URL format'}
+
+        # Custom headers to appear more like a regular browser
+        headers = {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+            'Accept-Language': 'en-US,en;q=0.5',
+        }
+
         try:
             async with httpx.AsyncClient(timeout=timeout,
-                                         follow_redirects=True) as client:
+                                       follow_redirects=True,
+                                       headers=headers) as client:
                 response = await client.get(url)
                 response.raise_for_status()
-                content_type = response.headers.get('content-type', '')
+                content_type = response.headers.get('content-type', '').lower()
 
                 if 'pdf' in content_type or url.lower().endswith('.pdf'):
-                    # save to bytes and use PyPDF to extract text
                     return self._extract_pdf_text(response.content)
                 else:
-                    # Assume HTML content
                     return self._extract_html_text(response.text, url)
-        except httpx.HTTPError as e:
-            print(f"HTTP error occurred: {e}")
-            return None
 
-    def _extract_html_text(self, html: str, url: str)-> Dict[str, str]:
-        """Extract text from HTML content using trafilatura."""
+        except httpx.TimeoutException:
+            return {'error': 'Request timed out. The website took too long to respond.'}
+        except httpx.TooManyRedirects:
+            return {'error': 'Too many redirects. The website might be trying to prevent automated access.'}
+        except httpx.HTTPStatusError as e:
+            status_code = e.response.status_code
+            if status_code == 403:
+                return {'error': 'Access forbidden. The website has blocked our request.'}
+            elif status_code == 404:
+                return {'error': 'Page not found. The URL might be invalid or the content has been removed.'}
+            elif status_code == 429:
+                return {'error': 'Too many requests. The website has rate-limited our access.'}
+            elif status_code == 503:
+                return {'error': 'Service unavailable. The website might be temporarily down or blocking automated access.'}
+            else:
+                return {'error': f'HTTP error {status_code}: The website returned an error.'}
+        except httpx.HTTPError as e:
+            return {'error': f'Connection error: {str(e)}'}
+        except Exception as e:
+            return {'error': f'Unexpected error: {str(e)}'}
+
+    def _extract_html_text(self, html: str, url: str) -> Dict[str, str]:
+        """Extract text from HTML content using trafilatura with error handling."""
         try:
             downloaded = trafilatura.extract(html, url=url)
-            return {'text': downloaded} if downloaded else {'error': 'No extractable content found. Possibly blocked or JavaScript-heavy site.'}
+            if not downloaded:
+                return {
+                    'error': 'No content could be extracted. This might be due to:' + 
+                            '\n- Website blocking content extraction' +
+                            '\n- JavaScript-heavy website' +
+                            '\n- Empty or non-text content'
+                }
+            return {'text': downloaded, 'source': url}
         except Exception as e:
-            print(f"Error extracting HTML content: {e}")
-            return None
+            return {'error': f'HTML extraction error: {str(e)}'}
 
-    def _extract_pdf_text(self, content_bytes: bytes)-> Dict[str, str]:
-        '''Extract text from PDF content using PyPDF.'''
+    def _extract_pdf_text(self, content_bytes: bytes) -> Dict[str, str]:
+        """Extract text from PDF content using PyPDF with error handling."""
         try:
-            reader = PdfReader(stream = content_bytes)
+            reader = PdfReader(stream=content_bytes)
             pages = []
 
+            if len(reader.pages) == 0:
+                return {'error': 'PDF appears to be empty'}
+
             for page in reader.pages:
-                pages.append(page.extract_text() or "")
+                text = page.extract_text() or ""
+                pages.append(text)
             
             joined_text = "\n".join(pages).strip()
             if not joined_text:
-                return {'error': 'PDF had no extractable text.'}
+                return {'error': 'PDF contains no extractable text. It might be scanned images or protected.'}
             return {'text': joined_text}        
         except Exception as e:
-            return {'error': str(e)}
+            return {'error': f'PDF extraction error: {str(e)}'}
 
-    async def run(self, url: str) -> Optional[dict]:
-        '''
-        Extract content from a given url.
-        '''
-        html_content = await self._fetch_url_html(url)
-
-        if html_content is None:
-            return {
-                'error': 'Failed to fetch or extract content for the provided URL.'
-            }
-        return html_content
+    async def run(self, url: str) -> Dict[str, str]:
+        """Extract content from a given URL with retry logic."""
+        # Try up to 2 times with a short delay between attempts
+        for attempt in range(2):
+            result = await self._fetch_url_html(url)
+            if not result.get('error') or attempt == 1:
+                return result
+            await asyncio.sleep(1)  # Wait 1 second before retry
+            
+        return result

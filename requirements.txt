@@ -14,7 +14,7 @@ langgraph>=0.0.3
 # Search and Content Tools
 google-search-results>=2.4.2
 trafilatura>=1.6.1
-pypdf==5.0.0
+pypdf==3.16.1
 httpx>=0.24.1
 
 # Templates

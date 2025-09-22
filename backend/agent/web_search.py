@@ -1,4 +1,4 @@
-from typing import List, Optional
+from typing import List, Optional, Dict
 from pydantic import BaseModel, Field
 
 from serpapi.google_search import GoogleSearch
@@ -55,12 +55,20 @@ class SearchTool(BaseModel):
                 )        
         return urls
 
-    async def run(self, query: str, num_results: int = 5) -> str:
-        """Run the search tool and return formatted results."""
+    async def run(self, query: str, num_results: int = 5) -> Dict:
+        """Run the search tool with input validation."""
         try:
+            if not self.apikey:
+                return "API key not provided"
+            
+            if not query or len(query.strip()) < 3:
+                return "Query must be at least 3 characters long"
+
             urls = self._search(query, num_results)
             if not urls:
-                return "No results found."
+                return "No results found"
+                
             return {i: url for i, url in enumerate(urls)}
+            
         except Exception as e:
-            return f"An error occurred during the search: {str(e)}"
+            return f"Search failed: {str(e)}"

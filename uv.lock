@@ -1259,11 +1259,11 @@ wheels = [
 
 [[package]]
 name = "pypdf"
-version = "5.0.0"
+version = "3.16.1"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/b1/f2/e2e8b886ee248c2d7e8c054009882636b1120599ea35159c184947f9d1d3/pypdf-5.0.0.tar.gz", hash = "sha256:5c536ec0f7af8e2f80eb32806964652a562b9abc5477b3c195e2b842725ce55b", size = 291148, upload-time = "2024-09-17T17:29:23.774Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/4d/9e/23bb47ae1c3e8f11b5d5625eef5d6ab94ba1806ea2826babcb867090cce5/pypdf-3.16.1.tar.gz", hash = "sha256:aff9540e6c5ec135d6e80943db74257523639325162d00c903ee1e2be84351fc", size = 273431, upload-time = "2023-09-17T13:42:59.642Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/1a/fa/7dd2c375e1b7f0a356f59a623307384b1886a894202648ebfeac645c70c0/pypdf-5.0.0-py3-none-any.whl", hash = "sha256:67603e2e96cdf70e676564520933c017d450f16075b9966be5fee128812ace8c", size = 292807, upload-time = "2024-09-17T17:29:21.734Z" },
+    { url = "https://files.pythonhosted.org/packages/92/a1/4af912cb0cbde61dc7ba898c06b145be63e46a23cd3e09f83a179af60705/pypdf-3.16.1-py3-none-any.whl", hash = "sha256:7fc9eac57162c1c4651ffae1ae96dee911d8e75af66e83b2453b2a553a8814cc", size = 276287, upload-time = "2023-09-17T13:42:57.78Z" },
 ]
 
 [[package]]
@@ -1545,7 +1545,7 @@ requires-dist = [
     { name = "langchain-groq", specifier = ">=0.0.1" },
     { name = "langgraph", specifier = ">=0.0.3" },
     { name = "pydantic", specifier = ">=2.0.0" },
-    { name = "pypdf", specifier = "==5.0.0" },
+    { name = "pypdf", specifier = "==3.16.1" },
     { name = "python-dotenv", specifier = ">=0.19.0" },
     { name = "serpapi", specifier = ">=0.1.5" },
     { name = "sqlmodel", specifier = ">=0.0.8" },
