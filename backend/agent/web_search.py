@@ -55,7 +55,7 @@ class SearchTool(BaseModel):
                 )        
         return urls
 
-    def run(self, query: str, num_results: int = 5) -> str:
+    async def run(self, query: str, num_results: int = 5) -> str:
         """Run the search tool and return formatted results."""
         try:
             urls = self._search(query, num_results)
