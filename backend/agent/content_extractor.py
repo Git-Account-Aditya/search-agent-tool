@@ -2,10 +2,11 @@ from pydantic import BaseModel
 from typing import List, Optional, Dict
 import trafilatura
 import httpx
-from pypdf import PdfReader
+from PyPDF2 import PdfReader
+from io import BytesIO
 import asyncio
 from urllib.parse import urlparse
-
+import re
 
 class ContentExtractedTool(BaseModel):
     """A tool for extracting content from URLs, handling both HTML and PDF formats."""
@@ -68,7 +69,13 @@ class ContentExtractedTool(BaseModel):
         except Exception as e:
             return {'error': f'Unexpected error: {str(e)}'}
 
-    def _extract_html_text(self, html: str, url: str) -> Dict[str, str]:
+    def _trim_whitespace(self, text: str) -> str:
+        """Utility to remove extra whitespace from text."""
+        text = re.sub(r'\n{3,}', '\n\n', text)  # Replace 3+ newlines with 2
+        text = re.sub(r'\s{2,}', ' ', text)  # Replace 2+ spaces with a single space
+        return text.strip()
+
+    def _extract_html_text(self, html: str, url: str, max_len: int = 20000) -> Dict[str, str]:
         """Extract text from HTML content using trafilatura with error handling."""
         try:
             downloaded = trafilatura.extract(html, url=url)
@@ -79,11 +86,13 @@ class ContentExtractedTool(BaseModel):
                             '\n- JavaScript-heavy website' +
                             '\n- Empty or non-text content'
                 }
-            return {'text': downloaded, 'source': url}
+            
+            trimmed_text = self._trim_whitespace(downloaded)
+            return {'text': trimmed_text[:max_len], 'source': url}
         except Exception as e:
             return {'error': f'HTML extraction error: {str(e)}'}
 
-    def _extract_pdf_text(self, content_bytes: bytes) -> Dict[str, str]:
+    def _extract_pdf_text(self, content_bytes: bytes, max_len: int = 20000) -> Dict[str, str]:
         """Extract text from PDF content using PyPDF with error handling."""
         try:
             reader = PdfReader(stream=content_bytes)
@@ -99,7 +108,9 @@ class ContentExtractedTool(BaseModel):
             joined_text = "\n".join(pages).strip()
             if not joined_text:
                 return {'error': 'PDF contains no extractable text. It might be scanned images or protected.'}
-            return {'text': joined_text}        
+            
+            trimmed_text = self._trim_whitespace(joined_text)
+            return {'text': trimmed_text[:max_len]}        
         except Exception as e:
             return {'error': f'PDF extraction error: {str(e)}'}
 

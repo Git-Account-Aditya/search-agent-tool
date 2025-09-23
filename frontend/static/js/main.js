@@ -44,37 +44,49 @@ async function performSearch() {
 function displaySearchResults(data) {
     currentResults.innerHTML = '';
 
-    const resultHtml = `
-        <div class="result-item">
-            <h3>${data.query}</h3>
-            <div class="result-meta">
-                <p>Results found: ${Object.keys(data.search_results).length}</p>
-                <p>Timestamp: ${new Date().toLocaleString()}</p>
+    // Check if the data is a final report or search results
+    if (data.detailed_summary) {
+        // Display the final report
+        const reportHtml = `
+            <div class="result-item">
+                <h3>${data.title}</h3>
+                <div class="result-content">
+                    <h4>Summary</h4>
+                    <p>${data.detailed_summary.replace(/\n/g, '<br>')}</p>
+                    <h4>Sources</h4>
+                    <ul>
+                        ${Object.entries(data.links).map(([url, status]) => `<li><a href="${url}" target="_blank">${url}</a> - <em>${status}</em></li>`).join('')}
+                    </ul>
+                </div>
             </div>
-            <div class="result-content">
-                ${formatSearchResults(data.search_results, data.extracted_contents)}
-            </div>
-        </div>
-    `;
-
-    currentResults.innerHTML = resultHtml;
-    searchResults.classList.remove('hidden');
-}
-
-// Format Search Results
-function formatSearchResults(searchResults, extractedContents) {
-    let html = '<ul>';
-    for (const [id, result] of Object.entries(searchResults)) {
-        const content = extractedContents[result.link];
-        html += `
-            <li>
-                <h4><a href="${result.link}" target="_blank">${result.title || result.link}</a></h4>
-                ${content && content.text ? `<p>${truncateText(content.text, 200)}</p>` : ''}
-            </li>
         `;
+        currentResults.innerHTML = reportHtml;
+    } else {
+        // This part can be kept for displaying initial search results if the backend ever sends them
+        const resultHtml = `
+            <div class="result-item">
+                <h3>${data.query}</h3>
+                <div class="result-meta">
+                    <p>Results found: ${Object.keys(data.search_results).length}</p>
+                    <p>Timestamp: ${new Date().toLocaleString()}</p>
+                </div>
+                <div class="result-content">
+                    ${Object.entries(data.search_results).map(([id, result]) => {
+                        const content = data.extracted_contents[result.link];
+                        return `
+                            <li>
+                                <h4><a href="${result.link}" target="_blank">${result.title || result.link}</a></h4>
+                                ${content && content.text ? `<p>${truncateText(content.text, 200)}</p>` : ''}
+                            </li>
+                        `;
+                    }).join('')}
+                </div>
+            </div>
+        `;
+        currentResults.innerHTML = resultHtml;
     }
-    html += '</ul>';
-    return html;
+
+    searchResults.classList.remove('hidden');
 }
 
 // Load Search History
@@ -105,35 +117,40 @@ function displaySearchHistory(history) {
     history.forEach(item => {
         const historyItem = document.createElement('div');
         historyItem.className = 'history-item';
-        historyItem.innerHTML = `
-            <h3>${item.query}</h3>
-            <div class="result-meta">
-                <p>Results: ${Object.keys(item.search_results).length}</p>
-                <p>Date: ${new Date(item.created_datetime).toLocaleString()}</p>
+        
+        // The content of the report, to be shown/hidden
+        const reportContent = `
+            <div class="result-content">
+                <h4>Summary</h4>
+                <p>${item.detailed_summary.replace(/\n/g, '<br>')}</p>
+                <h4>Sources</h4>
+                <ul>
+                    ${Object.entries(item.links).map(([url, status]) => `<li><a href="${url}" target="_blank">${url}</a> - <em>${status}</em></li>`).join('')}
+                </ul>
             </div>
         `;
-        historyItem.onclick = () => displayHistoryItem(item);
+
+        historyItem.innerHTML = `
+            <h3>${item.title || item.query}</h3>
+            <div class="result-meta">
+                <p>Date: ${new Date(item.created_datetime).toLocaleString()}</p>
+            </div>
+            ${reportContent}
+        `;
+
+        // Add click event to the title to toggle the content
+        historyItem.querySelector('h3').addEventListener('click', () => {
+            historyItem.classList.toggle('active');
+        });
+
         historyList.appendChild(historyItem);
     });
 }
 
 // Display History Item
 function displayHistoryItem(item) {
-    currentResults.innerHTML = '';
-    const resultHtml = `
-        <div class="result-item">
-            <h3>${item.query}</h3>
-            <div class="result-meta">
-                <p>Results found: ${Object.keys(item.search_results).length}</p>
-                <p>Timestamp: ${new Date(item.created_datetime).toLocaleString()}</p>
-            </div>
-            <div class="result-content">
-                ${formatSearchResults(item.search_results, item.extracted_contents)}
-            </div>
-        </div>
-    `;
-    currentResults.innerHTML = resultHtml;
-    searchResults.classList.remove('hidden');
+    // This function will now act as a wrapper for displaySearchResults
+    displaySearchResults(item);
 }
 
 // Utility Functions

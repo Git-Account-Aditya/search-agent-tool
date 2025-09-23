@@ -102,6 +102,18 @@ button:hover {
 .result-item h3, .history-item h3 {
     margin: 0 0 10px 0;
     color: #007bff;
+    cursor: pointer; /* Add pointer to indicate it's clickable */
+}
+
+.history-item .result-content {
+    display: none; /* Hide content by default */
+    padding-top: 10px;
+    border-top: 1px solid #eee;
+    margin-top: 10px;
+}
+
+.history-item.active .result-content {
+    display: block; /* Show content when active */
 }
 
 .result-meta {
