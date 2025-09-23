@@ -55,7 +55,7 @@ class SearchTool(BaseModel):
                 )        
         return urls
 
-    async def run(self, query: str, num_results: int = 5) -> Dict:
+    async def run(self, query: str, num_results: int = 1) -> Dict:
         """Run the search tool with input validation."""
         try:
             if not self.apikey:
