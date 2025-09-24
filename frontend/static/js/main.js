@@ -120,14 +120,13 @@ function displaySearchHistory(history) {
         const historyItem = document.createElement('div');
         historyItem.className = 'history-item';
         
-        // The content of the report, to be shown/hidden
         const reportContent = `
             <div class="result-content">
                 <h4>Summary</h4>
-                <p>${item.detailed_summary.replace(/\n/g, '<br>')}</p>
+                <p>${item.detailed_summary ? item.detailed_summary.replace(/\n/g, '<br>') : 'No summary available'}</p>
                 <h4>Sources</h4>
                 <ul>
-                    ${Object.entries(item.links || {}).map(([url, status]) => 
+                    ${Object.entries(item.links || {}).map(([url, status]) =>
                         `<li><a href="${url}" target="_blank">${url}</a> - <em>${status}</em></li>`
                     ).join('')}
                 </ul>
@@ -139,17 +138,18 @@ function displaySearchHistory(history) {
             <div class="result-meta">
                 <p>Date: ${new Date(item.created_datetime).toLocaleString()}</p>
             </div>
-            ${reportContent}
         `;
 
-        // Add click event to the title to toggle the content
-        historyItem.querySelector('h3').addEventListener('click', () => {
-            historyItem.classList.toggle('active');
+        // Show detailed report on click
+        historyItem.addEventListener('click', () => {
+            currentResults.innerHTML = reportContent;
+            searchResults.classList.remove('hidden');
         });
 
         historyList.appendChild(historyItem);
     });
 }
+
 
 // Display History Item
 function displayHistoryItem(item) {
