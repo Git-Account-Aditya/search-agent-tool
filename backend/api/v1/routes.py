@@ -115,6 +115,7 @@ async def search(query: str, session: AsyncSession = Depends(get_session)):
             session.add(db_entry)
             session.add(db_report)
             await session.commit()
+            print("✅ Report saved with ID:", db_report.id)
             await session.refresh(db_entry)
             await session.refresh(db_report)
             
@@ -131,8 +132,7 @@ async def search(query: str, session: AsyncSession = Depends(get_session)):
                     "detailed_summary": db_report.detailed_summary,
                     "links": db_report.get_links(),
                     "created_datetime": db_report.created_datetime,
-                }   
-
+                } 
         
         except Exception as db_error:
             print(f"Database error: {str(db_error)}")
@@ -186,22 +186,27 @@ def extract_content(url: str):
 
 @router.get('/history')
 async def get_search_history(session: AsyncSession = Depends(get_session)):
-    """Retrieve all search history entries."""
+    """Retrieve combined search and report history."""
     try:
-        query = select(SearchHistory).order_by(SearchHistory.created_datetime.desc())
-        result = await session.execute(query)
-        history = result.scalars().all()
-        
-        # Convert JSON strings back to dictionaries for response
-        return [{
-            "id": entry.id,
-            "query": entry.query,
-            "search_results": entry.get_search_results(),
-            "extracted_contents": entry.get_extracted_contents(),
-            "created_datetime": entry.created_datetime
-        } for entry in history]
+        # Fetch all reports
+        report_result = await session.execute(
+            select(ReportHistory).order_by(ReportHistory.created_datetime.desc())
+        )
+        reports = report_result.scalars().all()
+
+        # Convert reports for frontend
+        history = [{
+            "id": r.id,
+            "query": r.title,  # use title as label
+            "detailed_summary": r.detailed_summary,
+            "links": r.get_links() or {},
+            "created_datetime": r.created_datetime.isoformat() if r.created_datetime else None
+        } for r in reports]
+
+        return history
+
     except Exception as e:
         raise HTTPException(
             status_code=500,
-            detail=f"Failed to retrieve search history: {str(e)}"
+            detail=f"Failed to retrieve history: {str(e)}"
         )
