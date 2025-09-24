@@ -18,6 +18,7 @@ load_dotenv()
 router = APIRouter()
 
 
+
 # Initialize the search tool with the API key from environment variables
 serp_apikey = os.getenv('SERPAPI_API_KEY')
 
@@ -45,6 +46,7 @@ async def search(query: str, session: AsyncSession = Depends(get_session)):
         search_results = await search_tool.run(query)
         
         if isinstance(search_results, str):  # Error case from search tool
+            print(f"SearchTool error: {search_results}") 
             raise HTTPException(status_code=400, detail=search_results)
         
         if not search_results:
@@ -104,11 +106,11 @@ async def search(query: str, session: AsyncSession = Depends(get_session)):
                 title=results.get('title', f"Report for: {query}"),
                 detailed_summary=results.get('detailed_summary', 'Summary not available')
             ) 
-            print(results)   
+            # print(results)   
             links = results.get('links', {})
             db_report.set_links(links)
 
-            print(db_report.detailed_summary, '...')
+            # print(db_report.detailed_summary, '...')
             # Use the session from dependency injection
             session.add(db_entry)
             session.add(db_report)
@@ -123,7 +125,14 @@ async def search(query: str, session: AsyncSession = Depends(get_session)):
             
             report_result = report.scalars().first()
             print(json.dumps(report_result))
-            return json.dumps(report_result)
+            return {
+                    "id": db_report.id,
+                    "title": db_report.title,
+                    "detailed_summary": db_report.detailed_summary,
+                    "links": db_report.get_links(),
+                    "created_datetime": db_report.created_datetime,
+                }   
+
         
         except Exception as db_error:
             print(f"Database error: {str(db_error)}")

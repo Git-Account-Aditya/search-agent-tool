@@ -55,7 +55,9 @@ function displaySearchResults(data) {
                     <p>${data.detailed_summary.replace(/\n/g, '<br>')}</p>
                     <h4>Sources</h4>
                     <ul>
-                        ${Object.entries(data.links).map(([url, status]) => `<li><a href="${url}" target="_blank">${url}</a> - <em>${status}</em></li>`).join('')}
+                        ${Object.entries(data.links || {}).map(([url, status]) => 
+                            `<li><a href="${url}" target="_blank">${url}</a> - <em>${status}</em></li>`
+                        ).join('')}
                     </ul>
                 </div>
             </div>
@@ -125,7 +127,9 @@ function displaySearchHistory(history) {
                 <p>${item.detailed_summary.replace(/\n/g, '<br>')}</p>
                 <h4>Sources</h4>
                 <ul>
-                    ${Object.entries(item.links).map(([url, status]) => `<li><a href="${url}" target="_blank">${url}</a> - <em>${status}</em></li>`).join('')}
+                    ${Object.entries(item.links || {}).map(([url, status]) => 
+                        `<li><a href="${url}" target="_blank">${url}</a> - <em>${status}</em></li>`
+                    ).join('')}
                 </ul>
             </div>
         `;
