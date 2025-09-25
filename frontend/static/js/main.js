@@ -51,7 +51,7 @@ function displaySearchResults(data) {
             <div class="result-item">
                 <h3>${data.title}</h3>
                 <div class="result-content">
-                    <h4>Summary</h4>
+                    <h4>Report</h4>
                     <p>${data.detailed_summary.replace(/\n/g, '<br>')}</p>
                     <h4>Sources</h4>
                     <ul>
@@ -107,6 +107,31 @@ async function loadSearchHistory() {
     }
 }
 
+
+async function deleteReport(reportId) {
+    try {
+        const response = await fetch(`${API_BASE_URL}/report/${reportId}`, {
+            method: 'DELETE'
+        });
+
+        if (!response.ok) {
+            const error = await response.json();
+            alert(`Error: ${error.detail}`);
+            return;
+        }
+
+        const result = await response.json();
+        console.log(result.message);
+
+        // Remove item from UI
+        document.getElementById(`report-${reportId}`).remove();
+
+    } catch (err) {
+        console.error("Delete request failed:", err);
+    }
+}
+
+
 // Display Search History
 function displaySearchHistory(history) {
     historyList.innerHTML = '';
@@ -119,31 +144,56 @@ function displaySearchHistory(history) {
     history.forEach(item => {
         const historyItem = document.createElement('div');
         historyItem.className = 'history-item';
-        
+        console.log("History item:", item);
+
         const reportContent = `
-            <div class="result-content">
-                <h4>Summary</h4>
-                <p>${item.detailed_summary ? item.detailed_summary.replace(/\n/g, '<br>') : 'No summary available'}</p>
-                <h4>Sources</h4>
-                <ul>
-                    ${Object.entries(item.links || {}).map(([url, status]) =>
-                        `<li><a href="${url}" target="_blank">${url}</a> - <em>${status}</em></li>`
-                    ).join('')}
-                </ul>
+            <div class="result-item">
+                <h3>${item.query ? item.query : 'No title available'}</h3>
+                <div class="result-content">
+                    <h4>Report</h4>
+                    <p>${item.detailed_summary ? item.detailed_summary.replace(/\n/g, '<br>') : 'No summary available'}</p>
+                    <h4>Sources</h4>
+                    <ul>
+                        ${Object.entries(item.links || {}).map(([url, status]) =>
+                            `<li><a href="${url}" target="_blank">${url}</a> - <em>${status}</em></li>`
+                        ).join('')}
+                    </ul>
+                </div>
             </div>
         `;
 
+
+        // History header with trash button on right
         historyItem.innerHTML = `
-            <h3>${item.title || item.query}</h3>
+            <div class="history-header" style="display: flex; justify-content: space-between; align-items: center;">
+                <h3 style="cursor: pointer; color: #007bff;">${item.title || item.query}</h3>
+                <button class="delete-btn" data-id="${item.id}" 
+                        style="background: none; border: none; cursor: pointer; font-size: 18px; color: red;">
+                    🗑️
+                </button>
+            </div>
             <div class="result-meta">
                 <p>Date: ${new Date(item.created_datetime).toLocaleString()}</p>
             </div>
         `;
 
-        // Show detailed report on click
-        historyItem.addEventListener('click', () => {
+        // Show detailed report when clicking title
+        historyItem.querySelector('h3').addEventListener('click', () => {
             currentResults.innerHTML = reportContent;
             searchResults.classList.remove('hidden');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        });
+
+        // Delete when clicking trash button
+        historyItem.querySelector('.delete-btn').addEventListener('click', async (e) => {
+            e.stopPropagation();
+            const reportId = e.target.dataset.id;
+
+            if (confirm('Are you sure you want to delete this report?')) {
+                await deleteReport(reportId);
+                loadSearchHistory();
+                currentResults.innerHTML = '';
+            }
         });
 
         historyList.appendChild(historyItem);

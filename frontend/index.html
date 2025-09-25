@@ -1,11 +1,13 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Search Agent Reports</title>
     <link rel="stylesheet" href="static/css/styles.css">
 </head>
+
 <body>
     <div class="container">
         <header>
@@ -31,10 +33,22 @@
         <!-- History Section -->
         <div id="historySection" class="history-container">
             <h2>Search History</h2>
-            <div id="historyList"></div>
+            <div id="historyList">
+                <div class="history-item" id="report-${item.id}">
+                    <div class="history-header">
+                        <h3 class="report-title">${item.title || item.query}</h3>
+                        <button class="delete-btn" onclick="deleteReport(${item.id})">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                    <p class="date">Date: ${new Date(item.created_datetime).toLocaleString()}</p>
+                </div>
+
+            </div>
         </div>
     </div>
 
     <script src="static/js/main.js"></script>
 </body>
+
 </html>
