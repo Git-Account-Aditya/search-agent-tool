@@ -75,7 +75,7 @@ class ContentExtractedTool(BaseModel):
         text = re.sub(r'\s{2,}', ' ', text)  # Replace 2+ spaces with a single space
         return text.strip()
 
-    def _extract_html_text(self, html: str, url: str, max_len: int = 20000) -> Dict[str, str]:
+    def _extract_html_text(self, html: str, url: str, max_len: int = 30000) -> Dict[str, str]:
         """Extract text from HTML content using trafilatura with error handling."""
         try:
             downloaded = trafilatura.extract(html, url=url)
@@ -92,7 +92,7 @@ class ContentExtractedTool(BaseModel):
         except Exception as e:
             return {'error': f'HTML extraction error: {str(e)}'}
 
-    def _extract_pdf_text(self, content_bytes: bytes, max_len: int = 20000) -> Dict[str, str]:
+    def _extract_pdf_text(self, content_bytes: bytes, max_len: int = 30000) -> Dict[str, str]:
         """Extract text from PDF content using PyPDF with error handling."""
         try:
             reader = PdfReader(stream=content_bytes)

@@ -1,3 +1,4 @@
+from email import message
 from fastapi import APIRouter, HTTPException, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 from dotenv import load_dotenv
@@ -210,3 +211,28 @@ async def get_search_history(session: AsyncSession = Depends(get_session)):
             status_code=500,
             detail=f"Failed to retrieve history: {str(e)}"
         )
+
+# -------------------------------------- Delete routes ----------------------------------
+
+@router.delete('/report/{id}')
+async def delete_report(id: int, session: AsyncSession = Depends(get_session)):
+    '''
+        This function delete history reports.
+    '''
+    try:
+        query = select(ReportHistory).where(ReportHistory.id == id)
+        report = await session.execute(query)
+        report = report.scalars().first()
+
+        if not report:
+            raise HTTPException(status_code = 404, detail=f'No report is selected to delete. Id: {id}')
+        else:
+            print('Deleting selected report...')
+            await session.delete(report)
+            await session.commit()
+            print('Report is now deleted.')
+            return{
+                'message': f'Report with id {id} is deleted.'
+            }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to delete report ID {id}: {str(e)}")
