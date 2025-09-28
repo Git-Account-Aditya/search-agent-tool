@@ -7,7 +7,7 @@ const currentResults = document.getElementById('currentResults');
 const historyList = document.getElementById('historyList');
 
 // API Base URL
-const API_BASE = window.location.hostname.includes("localhost")
+const API_BASE_URL = window.location.hostname.includes("localhost")
   ? "http://localhost:8000/api/v1"
   : "https://search-agent-tool.onrender.com/api/v1";
 
